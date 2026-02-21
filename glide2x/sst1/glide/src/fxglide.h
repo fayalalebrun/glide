@@ -1311,10 +1311,12 @@ if (_GlideRoot.CPUType == 6) {\
 #else
 
 #ifndef GDBG_INFO_ON
+#ifndef SIM_BACKEND
 #define GET(s)          s
 #define SET(d,s)        d = s
 #define SET16(d,s)      d = s
 #define SETF(d,s)       (*(float *)&(d)) = s
+#endif /* !SIM_BACKEND — sst.h already defines SET/GET for sim */
 #else
 #undef  GET
 

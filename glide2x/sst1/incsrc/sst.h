@@ -1040,11 +1040,20 @@ typedef struct sstregs {        // THE CHIP
 #endif
 
 // Here are the defines for the hardware
+#ifdef SIM_BACKEND
+#include "fxsim.h"
+#define GET(s)    simReadReg((volatile void *)&(s))
+#define GET16(s)  ((FxU16)simReadReg((volatile void *)&(s)))
+#define SET(d,s)  simWriteReg((volatile void *)&(d), (FxU32)(s))
+#define SET16(d,s) simWriteReg((volatile void *)&(d), (FxU32)(s))
+#define SETF(d,s) simWriteRegF((volatile void *)&(d), (s))
+#else
 #define GET(s) s
 #define GET16(s) s
 #define SET(d,s) d = s
 #define SET16(d,s) d = s
 #define SETF(d,s) (*(float *)&(d)) = s
+#endif
 
 // SET macros for FBI
 #define SET_FBI(d,s)    SET (*(&(d)+0x100),s)

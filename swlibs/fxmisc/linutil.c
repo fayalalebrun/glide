@@ -28,6 +28,7 @@
 #include "linutil.h"
 
 static int init_done=0;
+static int init_failed=0;
 static struct termios save_termdata;
 
 static void reset_term() {
@@ -40,12 +41,16 @@ static void do_init() {
 
   if (tcgetattr(0, &termdata)<0) {
     fprintf(stderr, "Failed to get termio data for stdin\n");
+    init_done=1;
+    init_failed=1;
     return;
-  }  
+  }
   save_termdata=termdata;
   cfmakeraw(&termdata);
   if (tcsetattr(0, 0, &termdata)<0) {
     fprintf(stderr, "Failed to set termio data for stdin\n");
+    init_done=1;
+    init_failed=1;
     return;
   }
   atexit(reset_term);
@@ -57,6 +62,7 @@ int lin_kbhit() {
   struct timeval to;
 
   if (!init_done) do_init();
+  if (init_failed) return 0;
   FD_ZERO(&set);
   FD_SET(0, &set);
   to.tv_sec=0;
@@ -69,6 +75,7 @@ char lin_getch() {
   char c;
 
   if (!init_done) do_init();
+  if (init_failed) return EOF;
   if (read(0, &c, 1) != 1)
     return EOF;
   return c;

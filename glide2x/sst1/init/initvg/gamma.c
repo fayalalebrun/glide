@@ -97,6 +97,12 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGamma(FxU32 *sstbase, double gamma)
 FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase, double gammaR,
   double gammaG, double gammaB)
 {
+#ifdef SIM_BACKEND
+    /* Skip gamma table loading in simulation — SpinalVoodoo doesn't model
+     * the DAC CLUT, and writing clutData registers is unnecessary overhead. */
+    INIT_PRINTF(("sst1InitGammaRGB(): SIM_BACKEND - gamma table loading skipped\n"));
+    return(FXTRUE);
+#else
     FxU32 x, n;
     FxU32 gammaTableR[256];
     FxU32 gammaTableG[256];
@@ -174,6 +180,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase, double gammaR,
         INIT_PRINTF(("sst1InitGammaRGB() exiting with status %d...\n", FXTRUE));
     }
     return(FXTRUE);
+#endif /* !SIM_BACKEND */
 }
 
 FX_EXPORT FxBool FX_CSTYLE sst1InitGammaTable(FxU32 *sstbase, FxU32 nentries, 

@@ -47,6 +47,46 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
   GrScreenResolution_t screenResolution, GrScreenRefresh_t screenRefresh,
   sst1VideoTimingStruct *altVideoTiming)
 {
+#ifdef SIM_BACKEND
+    /* In simulation, skip video init (no DAC, no video output).
+     * Set resolution info that Glide needs, then return success.
+     */
+    volatile Sstregs *sst = (Sstregs *) sstbase;
+
+    if(!sst)
+        return(FXFALSE);
+
+    if(sst1InitCheckBoard(sstbase) == FXFALSE)
+        return(FXFALSE);
+
+    {
+        static int _w[] = {320,320,400,512,640,640,640,640,800,960,856,512};
+        static int _h[] = {200,240,256,384,200,350,400,480,600,720,480,256};
+        int idx = (int)screenResolution;
+        if (idx >= 0 && idx < 12) {
+            sst1CurrentBoard->fbiVideoWidth = _w[idx];
+            sst1CurrentBoard->fbiVideoHeight = _h[idx];
+        } else {
+            sst1CurrentBoard->fbiVideoWidth = 640;
+            sst1CurrentBoard->fbiVideoHeight = 480;
+        }
+    }
+
+    /* Set memory FIFO low-water mark (needed by Glide's FIFO management).
+     * Real hardware computes this from video timing; for sim, use a small
+     * value so most of the FIFO space is available. */
+    sst1CurrentBoard->memFifoStatusLwm = 0x1f;
+    sst1CurrentBoard->fbiMemoryFifoEn = 1;
+
+    /* Set up basic rendering state */
+    ISET(sst->fbiInit1, IGET(sst->fbiInit1) & ~SST_VIDEO_RESET);
+    ISET(sst->fbiInit2, (IGET(sst->fbiInit2) & ~SST_SWAP_ALGORITHM) | SST_SWAP_VSYNC);
+    sst1InitIdleFBINoNOP(sstbase);
+
+    INIT_PRINTF(("sst1InitVideo(): SIM_BACKEND - video init stubbed (%dx%d)\n",
+        sst1CurrentBoard->fbiVideoWidth, sst1CurrentBoard->fbiVideoHeight));
+    return(FXTRUE);
+#else
     FxU32 n, vtmp;
     volatile Sstregs *sst = (Sstregs *) sstbase;
     sst1VideoTimingStruct *sstVideoRez;
@@ -791,6 +831,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
 
     INIT_PRINTF(("sst1InitVideo() exiting with status %d...\n", FXTRUE));
     return(FXTRUE);
+#endif /* !SIM_BACKEND */
 }
 
 /*
@@ -1077,6 +1118,10 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetVidClk(FxU32 *sstbase, float vidClkFreq)
 FX_EXPORT FxBool FX_CSTYLE sst1InitSetGrxClk(FxU32 *sstbase,
   sst1ClkTimingStruct *sstGrxClk)
 {
+#ifdef SIM_BACKEND
+    /* No DAC to program in simulation */
+    return(FXTRUE);
+#else
     FxBool retVal = FXFALSE;
     int helper = (GETENV(("SST_DEBUGDAC"))) ? 1 : 0;
 
@@ -1107,6 +1152,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetGrxClk(FxU32 *sstbase,
         return(sst1InitResetTmus(sstbase));
     }
     return(FXTRUE);
+#endif /* !SIM_BACKEND */
 }
 
 /*

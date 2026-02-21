@@ -163,6 +163,14 @@ FxBool sst1InitExecuteDacRdWr(FxU32 *sstbase, sst1InitDacRdWrStruct
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitDacDetect(FxU32 * sstbase)
 {
+#ifdef SIM_BACKEND
+    /* In simulation, skip DAC probing entirely.
+     * Set DAC type to ICS (simplest clock programming path).
+     */
+    sst1CurrentBoard->fbiDacType = SST_FBI_DACTYPE_ICS;
+    INIT_PRINTF(("sst1InitDacDetect(): SIM_BACKEND - using ICS DAC stub\n"));
+    return(FXTRUE);
+#else
     FxU32 n;
     FxU32 fbiInit1_save;
     FxU32 fbiInit2_save;
@@ -213,6 +221,7 @@ done:
     ISET(sst->fbiInit2, fbiInit2_save);
     sst1InitIdleFBINoNOP(sstbase);
     return(retVal);
+#endif /* !SIM_BACKEND */
 }
 
 /*

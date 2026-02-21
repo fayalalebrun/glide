@@ -99,12 +99,18 @@
 #endif /* DIRECTX */
 
 /* Defines to writing to/reading from SST-1 */
+#ifdef SIM_BACKEND
+#include "fxsim.h"
+#define IGET(A)    simReadReg((volatile void *)&(A))
+#define ISET(A,D)  simWriteReg((volatile void *)&(A), (FxU32)(D))
+#else
 #if 0
 #define IGET(A)    A
 #define ISET(A,D)  A = (D)
 #else
 #define IGET(A)    sst1InitRead32 ((FxU32 *)(void *)&(A))
 #define ISET(A,D)  sst1InitWrite32((FxU32 *)(void *)&(A), D)
+#endif
 #endif
 
 /*

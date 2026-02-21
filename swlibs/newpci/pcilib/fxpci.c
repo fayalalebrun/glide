@@ -31,7 +31,11 @@
 #include "fxpci.h"
 #include "pcilib.h"
 #if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#ifdef SIM_BACKEND
+#include "fxsim.h"
+#else
 #include "fxlinux.h"
+#endif
 #endif
 
 /* PRIVATE DATA (within the library) */
